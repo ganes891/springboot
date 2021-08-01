@@ -8,7 +8,7 @@ public class WelcomeController {
 	
 	@RequestMapping("/greeting")
 	public String greeting() {
-		return "Test Microservice using my git code  ganesh891";
+		return "Welcome to test microservice page - git reference ganesh891";
 	}
 
 }
