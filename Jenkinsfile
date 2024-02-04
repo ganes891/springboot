@@ -11,9 +11,9 @@ def imobileauth_deploy(){
 pipeline {
 	agent any
 
-	environment {
-    DOCKERHUB_CREDENTIALS = credentials('fe99a365-14de-418f-98e4-b93030779645')
-    }
+	//environment {
+    //DOCKERHUB_CREDENTIALS = credentials('fe99a365-14de-418f-98e4-b93030779645')
+    //}
 
 
 	stages  {
