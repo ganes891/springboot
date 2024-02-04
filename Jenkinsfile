@@ -3,7 +3,7 @@ def version='1.0'
 def branch='master'
 def mobileVersion='1.0.4'
 def specificCause = currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')
-def notificationEmails="ganesan.kandasami@gmail.com"
+//def notificationEmails="ganesan.kandasami@gmail.com"
 def deployType='imobile-auth'
 def imobileauth_deploy(){
 	sh 'helm upgrade java-app /helm/java-app'
@@ -92,7 +92,7 @@ pipeline {
 
 
     }
-  	post {
+  	/*post {
         success {
             mail bcc: '', body: "<p>Hello Team</p><p>Production Deployment is Completed succesfully,which is triggered by <b> ${specificCause.userName} </b> for <b>optimus imobileauth backend services</b> with the following</p><table style=\"width: 100%;border: 1px solid black;	border-collapse: collapse;\"><tr style=\"border: 1px solid black;	border-collapse: collapse;\"><th width=\"30%\" align=\"left\" style=\"padding-left:10px; border: 1px solid black;	border-collapse: collapse;\">Deployment option</th><td width=\"70%\" align=\"left\" style=\"padding-left:10px;border: 1px solid black;	border-collapse: collapse;\"><span>${deployType}</span></td></tr><tr style=\"border: 1px solid black;	border-collapse: collapse;\"><th width=\"30%\" align=\"left\" style=\"padding-left:10px; border: 1px solid black;	border-collapse: collapse;\">Jira Id</th><td width=\"70%\" align=\"left\" style=\"padding-left:10px;border: 1px solid black;	border-collapse: collapse;\"><span>${params.JiraTicket}</span></td></tr><tr style=\"border: 1px solid black;	border-collapse: collapse;\"><th width=\"30%\" align=\"left\" style=\"padding-left:10px; border: 1px solid black;	border-collapse: collapse;\">Tag Name </th><td width=\"70%\" align=\"left\" style=\"padding-left:10px;border: 1px solid black;	border-collapse: collapse;\"><span>$tag</span></td></tr></table><br/><p style=\"font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;\">Deployment status would be notified.- ${env.BUILD_URL}</p><p style=\"font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;\">Thanks</p>", cc: '', charset: 'UTF-8', from: 'jenkins-notification@ganesh-dev.com', mimeType: 'text/html', replyTo: '', subject: "optimus production deployment completed succesfully : JIRA #${params.JiraTicket}", to: "${notificationEmails}";
         }
@@ -101,5 +101,5 @@ pipeline {
         }
 
 
-    }
+    }*/
 }
