@@ -1,9 +1,0 @@
-- hosts: all
-  become: true
-  ignore_errors: yes
-  #vars_files:
-    #- ./vars/const.yml
-  roles:
-    - { role: os_hardening-rhel9, when: BUILD_METHOD == 'hardening-rhel9' }
-      #- { role: os_hardening-rhel8, when: BUILD_METHOD == 'hardening-rhel8' }
-
