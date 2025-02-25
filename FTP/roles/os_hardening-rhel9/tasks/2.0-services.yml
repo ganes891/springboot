@@ -1,0 +1,68 @@
+- name: Disable unused services SEC - 2.1
+  service:
+    name: "{{ item }}"
+    state: stopped
+    enabled: no
+  loop:
+    - telnet
+    - rsh
+    - rlogin
+    - rexec
+    - rstatd
+    - dhcpd
+    - nfs
+    - snmpd
+    - cups
+    - avahi-daemon
+    - ndflock
+    - rpcgssd
+    - rpcbind
+    - rpcidmapd
+    - sftpd
+    #- httpd
+    - smbd
+    - samba
+    - rshd
+    - ftpd
+    - tftp
+    - rsyncd
+    #- sssd
+    
+- name: Uninstall unwanted rpm packages SEC-2.9.4 
+  yum:
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - openldap-servers
+    - openldap-clients
+    - telnet
+    - bind
+    - bind-utils
+
+- name: Enable and start required services SEC-2.9.2
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  loop:
+    - sshd
+    - firewalld
+    - chronyd
+    - rsyslog
+
+###########################sec- 2.1#####################
+- name: Disable Automounting 
+  template:
+    src: 'etc/gnome/00-media-automount.j2'
+    dest: '/etc/dconf/db/local.d/00-media-automount'
+
+- name: Disable Automounting - refresh to take effect 
+  shell: dconf update
+
+- name: Disable USB storage 
+  template:
+    src: 'etc/gnome/blacklist.conf.j2'
+    dest: '/etc/modprobe.d/blacklist.conf'
+
+##########################################################
+

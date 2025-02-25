@@ -1,0 +1,40 @@
+- name: Ensure permissions on bootloader config are configured - 1.4.1
+  shell: "{{ item }}"
+  with_items:
+    -  chown root:root /boot/grub2/grub.cfg
+    -  chmod og-rwx /boot/grub2/grub.cfg
+    -  chown root:root /boot/grub2/user.cfg
+    -  chmod og-rwx /boot/grub2/user.cfg
+    #-  usermod -s /sbin/nologin
+
+####RHEL9-FTP specific changes####   
+#- name: "2.2.1.2 Ensure chrony is configured - NTP server"
+#  shell: "{{ item }}"
+#  with_items:
+#    - grep -qxF 'pool '{{ ntp_server_ip }}' iburst' /etc/chrony.conf || echo 'pool '{{ ntp_server_ip }}' iburst' >> /etc/chrony.conf
+#    - grep -qxF 'server '{{ ntp_server_ip }}'' /etc/chrony.conf || echo 'server '{{ ntp_server_ip }}'' >> /etc/chrony.conf
+#################################
+
+- name: "4.2.1.5 Ensure remote rsyslog messages are only accepted on designated log host"
+  shell: "{{ item }}"
+  with_items:
+    - grep -qxF '$ModLoad imtcp' /etc/rsyslog.conf || echo '$ModLoad imtcp' >> /etc/rsyslog.conf
+    - grep -qxF '$InputTCPServerRun 514' /etc/rsyslog.conf || echo '$InputTCPServerRun 514' >> /etc/rsyslog.conf
+
+- name: "1.5.2 Ensure core dump backtraces are disabled"
+  shell: "{{ item }}"
+  with_items:
+    - grep -qxF 'ProcessSizeMax=0' /etc/systemd/coredump.conf || echo 'ProcessSizeMax=0' >> /etc/systemd/coredump.conf
+
+- name: Postfix service installation
+  shell: "{{ item }}"
+  with_items:
+    - yum install postfix -y
+    - sleep 3
+    - sed -i '/inet_interfaces = localhost/d' /etc/postfix/main.cf
+    - grep -qxF 'inet_interfaces = loopback-only' /etc/postfix/main.cf|| echo 'inet_interfaces = loopback-only' >> /etc/postfix/main.cf
+    - grep -qxF '# Ciphers and keying' /etc/ssh/sshd_config || echo '# Ciphers and keying' >> /etc/ssh/sshd_config
+    - grep -qxF 'KexAlgorithms curve25519-sha256@libssh.org,ecdh-sha2-nistp521,ecdh-sha2-nistp384,ecdh-sha2-nistp256,diffie-hellman-group-exchange-sha256' /etc/ssh/sshd_config || echo 'KexAlgorithms curve25519-sha256@libssh.org,ecdh-sha2-nistp521,ecdh-sha2-nistp384,ecdh-sha2-nistp256,diffie-hellman-group-exchange-sha256' >> /etc/ssh/sshd_config
+    - grep -qxF 'Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr' /etc/ssh/sshd_config || echo 'Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr' >> /etc/ssh/sshd_config
+    - grep -qxF 'MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512,hmac-sha2-256,umac-128@openssh.com' /etc/ssh/sshd_config || echo 'MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512,hmac-sha2-256,umac-128@openssh.com' >> /etc/ssh/sshd_config
+    - systemctl restart sshd

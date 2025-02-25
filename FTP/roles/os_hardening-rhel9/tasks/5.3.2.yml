@@ -1,0 +1,67 @@
+# article followed https://access.redhat.com/solutions/6980935
+---
+#- name: upgrade authselect and PAM
+ # shell: dnf upgrade authselect pam
+ # For earlier version, update to `pam-1.3.1-25` and `authselect-1.2.6-1`:
+
+- name: Check if PAM package are installed
+  command: dnf upgrade authselect pam -y
+  register: package_check
+  
+- name: Print package installation results
+  debug:
+    msg: "authselect and pam package is installed and upgraded"
+  when: package_check is succeeded
+
+- name: select the authselect feature for history
+  command: authselect enable-feature with-pwhistory
+
+
+####################################################################
+# 5.3.2 Ensure lockout for failed password attempts is configured
+- name: 5.3.2 and 5.3.3 - Ensure authselect is installed for linking and later command running
+  yum:
+    name: authselect
+    state: present
+
+- name: faillock configs and commands to enable faillock
+  shell: "{{ item }}"
+  with_items:
+    -  mkdir /var/log/faillock
+    -  semanage fcontext -a -t faillog_t "/var/log/faillock(/.*)?"
+    -  restorecon -R -v /var/log/faillock
+    -  authselect current
+    -  authselect check
+    #-  authselect enable-feature with-faillock
+    -  authselect select sssd with-faillock
+    -  grep -qxF 'deny = 3' /etc/security/faillock.conf || echo 'deny = 3' >> /etc/security/faillock.conf
+    -  grep -qxF 'unlock_time = 900' /etc/security/faillock.conf || echo 'unlock_time = 900' >> /etc/security/faillock.conf
+    -  grep -qxF 'silent' /etc/security/faillock.conf || echo 'silent' >> /etc/security/faillock.conf
+    -  grep -qxF 'dir = /var/log/faillock' /etc/security/faillock.conf || echo 'dir = /var/log/faillock' >> /etc/security/faillock.conf
+
+#######################PAM password-auth and system-auth copy#######################
+
+- name: Take a backup of Pam files within the same directory
+  copy:    
+    src: /etc/pam.d/{{ item }}
+    dest: /etc/pam.d/{{ item }}_{{ ansible_date_time.iso8601 }}.bkp    
+    remote_src: yes     
+    owner: root    
+    group: root     
+    mode: '0755'    
+    force: yes    
+  with_items:
+    - password-auth
+    - system-auth  
+
+- name: copy the pam.d both system and password-auth files
+  template:
+    src: 'templates/shell/{{ item.src }}'
+    dest: '/etc/authselect/{{ item.dest }}'
+    owner: root
+    group: root
+    #mode: 755
+    #backup: yes
+  with_items:
+    - { src: 'password-auth.j2', dest: 'password-auth' }
+    - { src: 'system-auth.j2', dest: 'system-auth' }

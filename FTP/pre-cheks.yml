@@ -1,0 +1,143 @@
+
+[root@sgRHEL9-cms01 /]#
+[root@sgRHEL9-cms01 /]# df -h
+Filesystem           Size  Used Avail Use% Mounted on
+devtmpfs             7.8G     0  7.8G   0% /dev
+tmpfs                7.8G   52K  7.8G   1% /dev/shm
+tmpfs                7.8G  122M  7.7G   2% /run
+tmpfs                7.8G     0  7.8G   0% /sys/fs/cgroup
+/dev/mapper/cl-root   50G   28G   23G  56% /
+/dev/sda1           1014M  343M  672M  34% /boot
+/dev/mapper/cl-home  142G  124M  141G   1% /home
+tmpfs                1.6G   12K  1.6G   1% /run/user/42
+tmpfs                1.6G     0  1.6G   0% /run/user/0
+[root@sgRHEL9-cms01 /]# free -m
+              total        used        free      shared  buff/cache   available
+Mem:          15885        4543         332         320       11009       10691
+Swap:          8063          10        8053
+[root@sgRHEL9-cms01 /]# pvs
+  PV         VG Fmt  Attr PSize    PFree
+  /dev/sda2  cl lvm2 a--  <199.00g 4.00m
+[root@sgRHEL9-cms01 /]# lvc
+bash: lvc: command not found...
+Similar command is: 'lvs'
+[root@sgRHEL9-cms01 /]# lvs
+  LV   VG Attr       LSize    Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+  home cl -wi-ao---- <141.12g
+  root cl -wi-ao----   50.00g
+  swap cl -wi-ao----   <7.88g
+[root@sgRHEL9-cms01 /]# vgs
+  VG #PV #LV #SN Attr   VSize    VFree
+  cl   1   3   0 wz--n- <199.00g 4.00m
+[root@sgRHEL9-cms01 /]# cat /etc/fstab
+
+#
+# /etc/fstab
+# Created by anaconda on Tue May 16 17:06:56 2017
+#
+# Accessible filesystems, by reference, are maintained under '/dev/disk'
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
+#
+/dev/mapper/cl-root     /                       xfs     defaults        0 0
+UUID=b04184b5-1121-453b-b292-3db2c11a8a12 /boot                   xfs     defaults        0 0
+/dev/mapper/cl-home     /home                   xfs     defaults        0 0
+/dev/mapper/cl-swap     swap                    swap    defaults        0 0
+[root@sgRHEL9-cms01 /]# ps -ef | grep -i gitlab
+git       1863  9285  0 Mar19 ?        00:02:36 /opt/gitlab/embedded/bin/gitlab-workhorse -listenNetwork unix -listenUmask 0 -listenAddr /var/opt/gitlab/gitlab-workhorse/sockets/socket -authBackend http://localhost:8080/gitlab -authSocket /var/opt/gitlab/gitlab-rails/sockets/gitlab.socket -documentRoot /opt/gitlab/embedded/service/gitlab-rails/public -pprofListenAddr  -prometheusListenAddr localhost:9229 -secretPath /opt/gitlab/embedded/service/gitlab-rails/.gitlab_workhorse_secret -logFormat json -config config.toml
+git       1864     1  0 Mar19 ?        00:20:33 /opt/gitlab/embedded/bin/gitaly serve /var/opt/gitlab/gitaly/config.toml
+gitlab-+  1889  9306  0 Mar19 ?        00:07:38 /opt/gitlab/embedded/bin/alertmanager --web.listen-address=localhost:9093 --storage.path=/var/opt/gitlab/alertmanager/data --config.file=/var/opt/gitlab/alertmanager/alertmanager.yml
+git       1901  9307  1 Mar19 ?        01:40:07 /opt/gitlab/embedded/bin/ruby /opt/gitlab/embedded/bin/gitlab-exporter web -c /var/opt/gitlab/gitlab-exporter/gitlab-exporter.yml
+git       1902  9284  0 Mar19 ?        00:01:12 /opt/gitlab/embedded/bin/gitaly-wrapper /opt/gitlab/embedded/bin/gitaly serve /var/opt/gitlab/gitaly/config.toml
+git       1911  9311  0 Mar19 ?        00:04:16 /opt/gitlab/embedded/bin/gitlab-kas --configuration-file /var/opt/gitlab/gitlab-kas/gitlab-kas-config.yml
+root      1927  9287  0 Mar19 ?        00:00:00 nginx: master process /opt/gitlab/embedded/sbin/nginx -p /var/opt/gitlab/nginx
+gitlab-+  1928  1927  0 Mar19 ?        00:00:01 nginx: worker process
+gitlab-+  1929  1927  0 Mar19 ?        00:00:10 nginx: worker process
+gitlab-+  1930  1927  0 Mar19 ?        00:00:02 nginx: cache manager process
+gitlab-+  1933  9292  0 Mar19 ?        00:08:26 /opt/gitlab/embedded/bin/node_exporter --web.listen-address=localhost:9100 --collector.mountstats --collector.runit --collector.runit.servicedir=/opt/gitlab/sv --collector.textfile.directory=/var/opt/gitlab/node-exporter/textfile_collector
+gitlab-+  1938  9300  0 Mar19 ?        00:52:02 /opt/gitlab/embedded/bin/postgres_exporter --no-collector.stat_user_tables --collector.postmaster --web.listen-address=localhost:9187 --extend.query-path=/var/opt/gitlab/postgres-exporter/queries.yaml
+gitlab-+  1951  9291  0 Mar19 ?        00:49:17 /opt/gitlab/embedded/bin/prometheus --web.listen-address=localhost:9090 --storage.tsdb.path=/var/opt/gitlab/prometheus/data --config.file=/var/opt/gitlab/prometheus/prometheus.yml
+git       1960  9309  0 Mar19 ?        00:01:18 puma 6.4.0 (unix:///var/opt/gitlab/gitlab-rails/sockets/gitlab.socket,tcp://127.0.0.1:8080) [gitlab-puma-worker]
+gitlab-+  1966  9299  0 Mar19 ?        00:37:55 /opt/gitlab/embedded/bin/redis_exporter --web.listen-address=localhost:9121 --redis.addr=unix:///var/opt/gitlab/redis/redis.socket
+git       1974  9283  0 Mar19 ?        00:00:10 ruby /opt/gitlab/embedded/service/gitlab-rails/bin/sidekiq-cluster -e production -r /opt/gitlab/embedded/service/gitlab-rails -m 20 --timeout 25 *
+gitlab-+  1997 13790  0 Mar19 ?        00:19:50 postgres: gitlab gitlabhq_production [local] idle
+gitlab-+  2001 13790  0 Mar19 ?        01:00:35 postgres: gitlab-psql gitlabhq_production [local] SELECT
+git       2045  1960  0 Mar19 ?        00:04:15 puma: cluster worker 0: 1960 [gitlab-puma-worker]
+git       2050  1960  0 Mar19 ?        00:04:22 puma: cluster worker 1: 1960 [gitlab-puma-worker]
+gitlab-+  8686 13790  0 15:41 ?        00:00:00 postgres: gitlab gitlabhq_production [local] idle
+gitlab-+  8803 13790  0 15:45 ?        00:00:00 postgres: gitlab gitlabhq_production [local] idle
+gitlab-+  8904 13790  0 15:48 ?        00:00:00 postgres: gitlab gitlabhq_production [local] idle
+root      9275     1  0  2023 ?        00:01:31 runsvdir -P /opt/gitlab/service log: ...........................................................................................................................................................................................................................................................................................................................................................................................................
+root      9279  9277  0  2023 ?        00:00:07 svlogd -tt /var/log/gitlab/redis
+root      9280  9278  0  2023 ?        00:00:00 svlogd -tt /var/log/gitlab/postgresql
+gitlab-+  9282  9277  0  2023 ?        21:48:33 /opt/gitlab/embedded/bin/redis-server unixsocket:/var/opt/gitlab/redis/redis.socket
+root      9285  9275  0  2023 ?        00:00:00 runsv gitlab-workhorse
+root      9288  9284  0  2023 ?        00:00:07 svlogd /var/log/gitlab/gitaly
+root      9293  9283  0  2023 ?        00:16:57 svlogd /var/log/gitlab/sidekiq
+root      9294  9291  0  2023 ?        00:00:00 svlogd -tt /var/log/gitlab/prometheus
+root      9296  9287  0  2023 ?        00:00:00 svlogd -tt /var/log/gitlab/nginx
+root      9297  9285  0  2023 ?        00:00:15 svlogd /var/log/gitlab/gitlab-workhorse
+root      9301  9289  0  2023 ?        00:00:00 svlogd -tt /var/log/gitlab/logrotate
+root      9302  9292  0  2023 ?        00:00:00 svlogd -tt /var/log/gitlab/node-exporter
+root      9307  9275  0  2023 ?        00:00:00 runsv gitlab-exporter
+root      9310  9299  0  2023 ?        00:00:00 svlogd -tt /var/log/gitlab/redis-exporter
+root      9311  9275  0  2023 ?        00:00:00 runsv gitlab-kas
+root      9318  9306  0  2023 ?        00:00:00 svlogd -tt /var/log/gitlab/alertmanager
+root      9321  9307  0  2023 ?        00:01:23 svlogd -tt /var/log/gitlab/gitlab-exporter
+root      9322  9309  0  2023 ?        00:00:00 svlogd -tt /var/log/gitlab/puma
+root      9325  9311  0  2023 ?        00:00:00 svlogd -tt /var/log/gitlab/gitlab-kas
+root      9342  9300  0  2023 ?        00:00:00 svlogd -tt /var/log/gitlab/postgres-exporter
+gitlab-+  9411 13790  0 15:55 ?        00:00:00 postgres: gitlab gitlabhq_production [local] idle
+gitlab-+  9565 13790  0 15:58 ?        00:00:00 postgres: gitlab gitlabhq_production [local] idle
+gitlab-+  9669 13790  0 16:00 ?        00:00:00 postgres: gitlab gitlabhq_production [local] idle
+gitlab-+ 10764 13790  0 16:06 ?        00:00:00 postgres: gitlab gitlabhq_production [local] idle
+gitlab-+ 10796 13790  0 16:07 ?        00:00:00 postgres: gitlab gitlabhq_production [local] idle
+gitlab-+ 11026 13790  0 16:14 ?        00:00:00 postgres: gitlab gitlabhq_production [local] idle
+gitlab-+ 11092 13790  0 16:16 ?        00:00:00 postgres: gitlab gitlabhq_production [local] idle
+gitlab-+ 11098 13790  0 16:16 ?        00:00:00 postgres: gitlab gitlabhq_production [local] idle
+gitlab-+ 11185 13790  0 16:19 ?        00:00:00 postgres: gitlab gitlabhq_production [local] idle
+gitlab-+ 11620 13790  0 16:32 ?        00:00:00 postgres: gitlab gitlabhq_production [local] idle
+gitlab-+ 11621 13790  0 16:32 ?        00:00:00 postgres: gitlab gitlabhq_production [local] idle
+gitlab-+ 11628 13790  0 16:32 ?        00:00:00 postgres: gitlab gitlabhq_production [local] idle
+gitlab-+ 11629 13790  0 16:32 ?        00:00:00 postgres: gitlab gitlabhq_production [local] idle
+gitlab-+ 11630 13790  0 16:32 ?        00:00:00 postgres: gitlab gitlabhq_production [local] idle
+gitlab-+ 11658 13790  0 16:33 ?        00:00:00 postgres: gitlab gitlabhq_production [local] idle
+gitlab-+ 11755 13790  0 16:36 ?        00:00:00 postgres: gitlab gitlabhq_production [local] idle
+gitlab-+ 11759 13790  0 16:36 ?        00:00:00 postgres: gitlab gitlabhq_production [local] idle
+gitlab-+ 11774 13790  0 16:37 ?        00:00:00 postgres: gitlab gitlabhq_production [local] idle
+gitlab-+ 13790  9278  0 Feb13 ?        00:02:26 /opt/gitlab/embedded/bin/postgres -D /var/opt/gitlab/postgresql/data
+gitlab-+ 13792 13790  0 Feb13 ?        00:00:28 postgres: checkpointer
+gitlab-+ 13793 13790  0 Feb13 ?        00:00:36 postgres: background writer
+gitlab-+ 13794 13790  0 Feb13 ?        00:00:41 postgres: walwriter
+gitlab-+ 13795 13790  0 Feb13 ?        00:00:50 postgres: autovacuum launcher
+gitlab-+ 13796 13790  0 Feb13 ?        00:13:39 postgres: stats collector
+gitlab-+ 13797 13790  0 Feb13 ?        00:00:02 postgres: logical replication launcher
+root     15463  9289  0 16:40 ?        00:00:00 /bin/sh /opt/gitlab/embedded/bin/gitlab-logrotate-wrapper
+gitlab-+ 15515 13790  0 16:41 ?        00:00:00 postgres: gitlab-psql gitlabhq_production [local] SELECT
+gitlab-+ 15524 13790  0 16:41 ?        00:00:00 postgres: gitlab-psql gitlabhq_production [local] SELECT
+root     15528 11865  0 16:42 pts/1    00:00:00 grep --color=auto -i gitlab
+gitlab-+ 29511 13790  0 10:15 ?        00:00:01 postgres: gitlab gitlabhq_production [local] idle
+gitlab-+ 29516 13790  0 10:15 ?        00:01:03 postgres: gitlab gitlabhq_production [local] idle
+[root@sgRHEL9-cms01 /]#
+ 3.10.0-1160.114.2.el7
+
+
+ 3.10.0-1160.108.1.el7.x86_64
+
+
+ 
+Removed:
+  kernel.x86_64 0:3.10.0-1160.95.1.el7                        kernel-devel.x86_64 0:3.10.0-1160.95.1.el7
+
+Installed:
+  kernel.x86_64 0:3.10.0-1160.114.2.el7                       kernel-devel.x86_64 0:3.10.0-1160.114.2.el7
+
+Updated:
+  gitlab-ce.x86_64 0:16.10.0-ce.0.el7                      jenkins.noarch 0:2.440.2-1.1
+  kernel-headers.x86_64 0:3.10.0-1160.114.2.el7            kernel-tools.x86_64 0:3.10.0-1160.114.2.el7
+  kernel-tools-libs.x86_64 0:3.10.0-1160.114.2.el7         libX11.x86_64 0:1.6.7-5.el7_9
+  libX11-common.noarch 0:1.6.7-5.el7_9                     lm_sensors-libs.x86_64 0:3.4.0-8.20160601gitf9185e5.el7_9.1
+  python-perf.x86_64 0:3.10.0-1160.114.2.el7
+
+Complete!
+[root@sgRHEL9-cms01 ~]#
+[root@sgRHEL9-cms01 ~]#
