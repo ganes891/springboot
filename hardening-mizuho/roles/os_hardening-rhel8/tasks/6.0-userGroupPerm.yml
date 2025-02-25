@@ -1,0 +1,15 @@
+################## System File Permissions - SEC 6.1##################################
+- name: Set permissions and ownership on users, Groups, shadow - SEC 6.1 
+  file:
+    path: "{{ item.path }}"
+    state: "{{ item.state }}"
+    mode: "{{ item.mode }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+  loop:
+    - { path: '/etc/passwd', state: 'file', mode: '0644', owner: 'root', group: 'root' }
+    - { path: '/etc/shadow', state: 'file', mode: '0000', owner: 'root', group: 'root' }
+    - { path: '/etc/group', state: 'file', mode: '0644', owner: 'root', group: 'root' }
+    - { path: '/etc/gshadow', state: 'file', mode: '0000', owner: 'root', group: 'root' }
+    - { path: '/etc/ssh/sshd_config', state: 'file', mode: '0600', owner: 'root', group: 'root' }
+  notify: Restart sshd

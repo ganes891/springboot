@@ -3,8 +3,8 @@ AUDITDIR="/var/tmp/$(hostname -s)_audit"
 TIME="$(date +%F_%T)"
 . /etc/os-release
 MAIN_VERSION_ID="$(echo ${VERSION_ID} |cut -f1 -d'.')"
-if [[ ${MAIN_VERSION_ID} -lt 9 ]]; then
-  echo "OS release lower than 9 not supported. You are running ${VERSION_ID}"
+if [[ ${MAIN_VERSION_ID} -lt 8 ]]; then
+  echo "OS release lower than 8 not supported. You are running ${VERSION_ID}"
 fi
 
 mkdir -p $AUDITDIR
@@ -15,7 +15,7 @@ cat > /etc/issue.net << 'EOF'
 /------------------------------------------------------------------------\
 |                       *** NOTICE TO USERS ***                          |
 |                                                                        |
-| This computer system is the private property of Mizuho Bank      |
+| This computer system is the private property of RHB Bank      |
 | It is for authorized use only.                                         |
 |                                                                        |
 | Users (authorized or unauthorized) have no explicit or implicit        |
@@ -39,7 +39,7 @@ cat > /etc/issue.net << 'EOF'
 EOF
 cp -p /etc/motd /etc/motd_$TIME.bak
 cat > /etc/motd << 'EOF'
-MIZUHO Bank AUTHORIZED USE ONLY
+RHB Bank AUTHORIZED USE ONLY
 EOF
 rm -rf /etc/issue
 ln -s /etc/issue.net /etc/issue
@@ -47,24 +47,12 @@ ln -s /etc/issue.net /etc/issue
 #Setting system policy to FUTURE SEC - 2.8.16#####
 update-crypto-policies --set FUTURE
 
-#################################Additional commands##############################
+#Additional commands########
 #Run the following commands to set permissions on your grub configuration:
-
-cat > /etc/dconf/profile/gdm << EOF
-user-db:user
-system-db:gdm
-file-db:/usr/share/gdm/greeter-dconf-defaults
-EOF
-
-mkdir /etc/dconf/db/gdm.d
-
-cat > /etc/dconf/db/gdm.d/01-banner-message << EOF
-[org/gnome/login-screen]
-banner-message-enable=true
-banner-message-text='Authorized uses only. All activity may be monitored and reported.'
-EOF
-
-dconf update
+#chown root:root /boot/grub2/grub.cfg
+#chmod og-rwx /boot/grub2/grub.cfg
+#chown root:root /boot/grub2/user.cfg
+#chmod og-rwx /boot/grub2/user.cfg
 
 yum remove xorg-x11* -y  ## this package has dependencies on satellite
 yum remove telnet* -y
@@ -93,6 +81,7 @@ stat -Lc "%n %#a %u/%U %g/%G" /boot/grub2/grubenv /boot/grub2/grubenv 0600 0/roo
 
 
 ####################Network Security Configuration - SEC 3.0######################
+#cat > /etc/sysctl.d/99-sysctl.conf << EOF -> V2 changes
 cat > /etc/sysctl.conf << EOF
 net.ipv4.ip_forward=0
 net.ipv4.conf.all.send_redirects=0
@@ -117,22 +106,20 @@ net.ipv6.conf.all.accept_redirects=0
 net.ipv6.conf.default.accept_redirects=0
 net.ipv6.conf.all.disable_ipv6=1
 fs.suid_dumpable=0
-kernel.randomize_va_space=2
 EOF
+
 sysctl -w kernel.randomize_va_space=2
 sysctl -p /etc/sysctl.conf 
 sysctl -w net.ipv4.conf.all.send_redirects=0
 sysctl -w net.ipv4.conf.default.send_redirects=0
 sysctl -w net.ipv4.route.flush=1
 sysctl -w fs.suid_dumpable=0
-sysctl -p /etc/sysctl.conf 
+sysctl -p /etc/sysctl.conf
 
 cp -rp /etc/defaut/grub /etc/defaut/grub_bkp_$TIME
 sed -i '/.*GRUB_CMDLINE_LINUX.*/c\GRUB_CMDLINE_LINUX="crashkernel=auto resume=/dev/mapper/rhel-swap rd.lvm.lv=rhel/root rd.lvm.lv=rhel/swap rhgb quiet ipv6.disable=1"' /etc/default/grub
 grub2-mkconfig -o /boot/grub2/grub.cfg
-
 #grub2-mkconfig -o /boot/efi/EFI/redhat/grub.cfg   ##for physical servers use this
-
 ######################SSH Server Configuration#################################
 
 echo "Configuring SSH related all hardening values - SEC - 5.2"
@@ -170,10 +157,12 @@ echo "Setting core dump security limits..."
 grep -qxF '* hard core 0' /etc/security/limits.conf || echo '* hard core 0' >> /etc/security/limits.conf
 
 
-#############################Configure Sudo -SEC 2.6####################################
+#############################Configure Sudo -SEC 2.6####################################commenting RHEL9 setting
 grep -qxF 'Defaults    env_reset,     timestamp_timeout=30' /etc/sudoers || echo 'Defaults    env_reset,     timestamp_timeout=30' >> /etc/sudoers
 grep -qxF 'Defaults use_pty' /etc/sudoers || echo 'Defaults use_pty' >> /etc/sudoers
 grep -qxF  'Defaults  logfile="/var/log/sudo.log"' /etc/sudoers  || echo  'Defaults  logfile="/var/log/sudo.log"' >> /etc/sudoers 
+
+
 ########################Selinux status 2.7##############################################
 setenforce enforcing
 

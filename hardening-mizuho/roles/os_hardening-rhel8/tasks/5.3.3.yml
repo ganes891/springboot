@@ -1,0 +1,7 @@
+# 5.3.3 Ensure password reuse is limited
+
+- name: password history configs and commands to enable pwhistory
+  shell: "{{ item }}"
+  with_items:
+    -  authselect enable-feature with-pwhistory
+    -  grep -qxF 'remember = 5' /etc/security/pwhistory.conf || echo 'remember = 5' >> /etc/security/pwhistory.conf

@@ -1,0 +1,92 @@
+- name: install and start cron service 
+  yum:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - chrony
+- name: Enable and start cron
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  loop:
+    - chronyd
+- name: Find cron files and directories
+  find:
+    paths:
+      - /etc
+    patterns:
+      - cron.hourly
+      - cron.daily
+      - cron.weekly
+      - cron.monthly
+      - cron.d
+      - crontab
+    file_type: any
+  register: cron_directories
+
+- name: Ensure permissions on cron files and directories are configured
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: root
+    group: root
+    mode: og-rwx
+  with_items: "{{ cron_directories.files }}"
+
+################################SEC-5.1###################################
+
+- name: Set password expiration and warning SEC-5.4
+  lineinfile:
+    path: /etc/login.defs
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - { regexp: '^PASS_MAX_DAYS', line: 'PASS_MAX_DAYS   30' }
+    - { regexp: '^PASS_WARN_AGE', line: 'PASS_WARN_AGE   14' }
+    - { regexp: '^PASS_MIN_DAYS', line: 'PASS_MIN_DAYS   7' }
+
+- name: Set default umask for users SEC-5.4.2
+  lineinfile:
+    path: /etc/profile
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - { regexp: '^umask', line: 'umask 027' }
+    
+- name: Set default umask for users SEC-5.4.2
+  lineinfile:
+    path: /etc/bashrc
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - { regexp: '^umask', line: 'umask 027' }
+
+- name: Set default umask for all sh files SEC-5.4.2
+  shell: for file in /etc/profile.d/*.sh ;do echo "umask 027" >> "$file"; done
+   
+- name: Remove world-writable permissions on user home directories - sec-6.1.9
+  file:
+    path: "{{ item }}"
+    mode: '0700'
+  with_fileglob:
+    - /home/*
+
+- name: Restrict root and system accounts from direct logins
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - { regexp: '^PermitRootLogin', line: 'PermitRootLogin yes' }
+    #- { regexp: '^AllowUsers', line: 'AllowUsers *@*' }
+    #- { regexp: '^AllowGroups', line: 'AllowGroups *@*' }
+  notify: Restart sshd
+
+- name: Ensure default group for the root account is GID 0 - 5.4.6 
+  shell: usermod -g 0 root
+
+- name: Ensure inactive password lock is 30 days - SEC-5.4.8
+  shell: useradd -D -f 30
+
+
+    
