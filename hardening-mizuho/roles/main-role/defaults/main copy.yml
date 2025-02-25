@@ -1,4 +1,0 @@
-# Remove packages with known security issues used by - 2.2
-os_security_packages_clean: true
-os_security_packages_list: ['xinetd', 'inetd', 'ypserv', 'telnet-server', 'rsh-server', 'prelink']
-

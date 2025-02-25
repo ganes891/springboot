@@ -50,14 +50,14 @@
     - chronyd
     - rsyslog
 
-###########################sec- 2.1#####################
-- name: Disable Automounting 
-  template:
-    src: 'etc/gnome/00-media-automount.j2'
-    dest: '/etc/dconf/db/local.d/00-media-automount'
+###########################sec- 2.1##################### Un comment ob phy server after validation##
+#- name: Disable Automounting 
+#  template:
+#    src: 'etc/gnome/00-media-automount.j2'
+#    dest: '/etc/dconf/db/local.d/00-media-automount'
 
-- name: Disable Automounting - refresh to take effect 
-  shell: dconf update
+#- name: Disable Automounting - refresh to take effect 
+#  shell: dconf update
 
 #- name: Disable USB storage 
 #  template:
