@@ -3,15 +3,22 @@ upgrade: CSI driver scenarios:
 
 https://portal.nutanix.com/page/documents/details?targetId=CSI-Volume-Driver-v3_2:csi-csi-driver-deployment-and-upgrade-scenarios-r.html
 
+=============
 
-###
-Precheck: Nutanix CSI driver:
+Prod Pre work:
+
+1. Nutanix CSI driver opertor upgrade:
  
-for Version 2.6.6 to 3.1 upgrade:
+For Version 2.6.6 to 3.1 upgrade:
 
-Copy two files from Dev mirror server to prod Mirror server and before we upgrade CSI driver we need to create below two secrets under "openshift-nutanix-csi-driver" namespace.
+Copy two files from Dev mirror server to prod Mirror server to create two new secrets. we will apply this during activity.
 
-directory --->/opt/registry/ocpupgrade-4.13-4.14/ntnx-secrets
+Dev mirror directory --->/opt/registry/ocpupgrade-4.13-4.14/ntnx-secrets
 
--rw-r-----. 1 root root 203 Feb 22 16:03 ntnx-pe-secret.yaml      ---> update prism element user password and apply
--rw-r-----. 1 root root 212 Feb 22 16:04 ntnx-pc-secret.yaml      ---> update prism central user password and apply
+-rw-r-----. 1 root root 203 Feb 22 16:03 ntnx-pe-secret.yaml      ---> update prod prism element user and password
+-rw-r-----. 1 root root 212 Feb 22 16:04 ntnx-pc-secret.yaml      ---> update prod prism central user and password 
+
+=============
+
+Prod plan 
+Day one -- if 3 hours left will go for 4.14.
