@@ -59,10 +59,10 @@
 - name: Disable Automounting - refresh to take effect 
   shell: dconf update
 
-- name: Disable USB storage 
-  template:
-    src: 'etc/gnome/blacklist.conf.j2'
-    dest: '/etc/modprobe.d/blacklist.conf'
+#- name: Disable USB storage 
+#  template:
+#    src: 'etc/gnome/blacklist.conf.j2'
+#    dest: '/etc/modprobe.d/blacklist.conf'
 
 ##########################################################
 
