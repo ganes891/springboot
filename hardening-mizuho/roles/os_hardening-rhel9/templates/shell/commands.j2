@@ -127,9 +127,9 @@ sysctl -w net.ipv4.route.flush=1
 sysctl -w fs.suid_dumpable=0
 sysctl -p /etc/sysctl.conf 
 
-cp -rp /etc/defaut/grub /etc/defaut/grub_bkp_$TIME
-sed -i '/.*GRUB_CMDLINE_LINUX.*/c\GRUB_CMDLINE_LINUX="crashkernel=auto resume=/dev/mapper/rhel-swap rd.lvm.lv=rhel/root rd.lvm.lv=rhel/swap rhgb quiet ipv6.disable=1"' /etc/default/grub
-grub2-mkconfig -o /boot/grub2/grub.cfg
+#cp -rp /etc/defaut/grub /etc/defaut/grub_bkp_$TIME
+#sed -i '/.*GRUB_CMDLINE_LINUX.*/c\GRUB_CMDLINE_LINUX="crashkernel=auto resume=/dev/mapper/rhel-swap rd.lvm.lv=rhel/root rd.lvm.lv=rhel/swap rhgb quiet ipv6.disable=1"' /etc/default/grub
+#grub2-mkconfig -o /boot/grub2/grub.cfg   #for virtual servers
 
 #grub2-mkconfig -o /boot/efi/EFI/redhat/grub.cfg   ##for physical servers use this
 
