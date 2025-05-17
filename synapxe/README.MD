@@ -40,3 +40,13 @@ ansible.utils:6.0.0 was installed successfully
 [root@sgctcrhclient02 ~]#
 [root@sgctcrhclient02 ~]#
 
+
+- hosts: all
+  become: true
+  vars:
+    task_to_run: "{{ task | default('install') }}"
+    role_to_use: "{{ role | default('webserver') }}"
+  tasks:
+    - name: Run dynamic role task
+      include_tasks: "roles/{{ role_to_use }}/tasks/{{ task_to_run }}.yml"
+
