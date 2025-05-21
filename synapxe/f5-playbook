@@ -1,34 +1,43 @@
 ---
-- name: Fetch credentials from CyberArk and use for Linux login
+- name: Configure F5 via REST API using CyberArk credentials
   hosts: all
   gather_facts: no
   vars:
     cyberark_base_url: "https://cyberark.example.com/AIMWebService/api/Accounts"
-    cyberark_appid: "MyLinuxApp"
-    cyberark_safe: "LinuxSafe"
+    cyberark_appid: "F5AutomationApp"
+    cyberark_safe: "F5Safe"
+    f5_rest_endpoint: "/mgmt/tm/sys/global-settings"
+    f5_protocol: "https"
   tasks:
 
-    - name: Fetch SSH credentials from CyberArk
+    - name: Fetch F5 credentials from CyberArk
       uri:
         url: "{{ cyberark_base_url }}?AppId={{ cyberark_appid }}&Safe={{ cyberark_safe }}&Object={{ cyberark_object }}"
         method: GET
         return_content: yes
-        validate_certs: no  # Change to yes if you use a valid CA cert
+        validate_certs: no
       register: cyberark_response
 
-    - name: Set SSH credentials from CyberArk response
+    - name: Set F5 credentials
       set_fact:
-        ansible_user: "{{ cyberark_response.json.UserName }}"
-        ansible_password: "{{ cyberark_response.json.Content }}"
-        ansible_ssh_pass: "{{ cyberark_response.json.Content }}"
-        ansible_connection: ssh
-        ansible_become: yes
-        ansible_become_method: sudo
+        f5_username: "{{ cyberark_response.json.UserName }}"
+        f5_password: "{{ cyberark_response.json.Content }}"
 
-    - name: Confirm login with CyberArk-fetched credentials
-      shell: whoami
-      register: whoami_output
+    - name: Apply configuration to F5 via REST API
+      uri:
+        url: "{{ f5_protocol }}://{{ inventory_hostname }}{{ f5_rest_endpoint }}"
+        method: PATCH
+        user: "{{ f5_username }}"
+        password: "{{ f5_password }}"
+        force_basic_auth: yes
+        body_format: json
+        headers:
+          Content-Type: "application/json"
+        body:
+          hostname: "updated-hostname.example.com"
+        validate_certs: no
+      register: f5_response
 
-    - name: Show whoami output
+    - name: Show response from F5
       debug:
-        var: whoami_output.stdout
+        var: f5_response.status
