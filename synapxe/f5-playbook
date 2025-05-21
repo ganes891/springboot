@@ -1,0 +1,34 @@
+---
+- name: Fetch credentials from CyberArk and use for Linux login
+  hosts: all
+  gather_facts: no
+  vars:
+    cyberark_base_url: "https://cyberark.example.com/AIMWebService/api/Accounts"
+    cyberark_appid: "MyLinuxApp"
+    cyberark_safe: "LinuxSafe"
+  tasks:
+
+    - name: Fetch SSH credentials from CyberArk
+      uri:
+        url: "{{ cyberark_base_url }}?AppId={{ cyberark_appid }}&Safe={{ cyberark_safe }}&Object={{ cyberark_object }}"
+        method: GET
+        return_content: yes
+        validate_certs: no  # Change to yes if you use a valid CA cert
+      register: cyberark_response
+
+    - name: Set SSH credentials from CyberArk response
+      set_fact:
+        ansible_user: "{{ cyberark_response.json.UserName }}"
+        ansible_password: "{{ cyberark_response.json.Content }}"
+        ansible_ssh_pass: "{{ cyberark_response.json.Content }}"
+        ansible_connection: ssh
+        ansible_become: yes
+        ansible_become_method: sudo
+
+    - name: Confirm login with CyberArk-fetched credentials
+      shell: whoami
+      register: whoami_output
+
+    - name: Show whoami output
+      debug:
+        var: whoami_output.stdout
