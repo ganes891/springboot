@@ -27,14 +27,15 @@
   tasks:
     - name: Parse member list with names
       set_fact:
-        pool_members: >-
-          {{
-            members.splitlines()
-            | select('match', '^[^#]+$')
-            | map('regex_search', '(?P<ip>[^:]+):(?P<port>\\d+):(?P<name>.+)', '\\g<ip>:\\g<port>:\\g<name>')
-            | map('regex_replace', '^([^:]+):(\\d+):(.+)$', '{"host": "\\1", "port": \\2|int, "name": "\\3"}')
-            | map('from_yaml') | list
-          }}
+- name: Parse member list with names
+  set_fact:
+    pool_members: >-
+      {{
+        members.splitlines()
+        | select('match', '^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+:\\d+:.+')
+        | map('regex_replace', '^([^:]+):(\\d+):(.+)$', '{"host": "\\1", "port": \\2|int, "name": "\\3"}')
+        | map('from_yaml') | list
+      }}
 
     - name: Add each pool member
       bigip_pool_member:
