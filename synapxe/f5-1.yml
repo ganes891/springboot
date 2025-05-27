@@ -1,32 +1,3 @@
----
-- name: Add pool members with name to F5 pool
-  hosts: localhost
-  gather_facts: no
-  connection: local
-
-  collections:
-    - f5networks.f5_modules
-
-  vars:
-    f5_host: "f5.example.com"
-    f5_user: "admin"
-    f5_password: "your_password"
-    validate_certs: false
-
-  vars_prompt:
-    # These are used if not coming from Tower survey
-    # - name: pool_name
-    #   prompt: "Enter F5 pool name (e.g. /Common/web01)"
-    #   private: no
-    #
-    # - name: members
-    #   prompt: "Enter pool members (IP:PORT:NAME per line)"
-    #   private: no
-    #   multiline: true
-
-  tasks:
-    - name: Parse member list with names
-      set_fact:
 - name: Parse member list with names
   set_fact:
     pool_members: >-
@@ -36,17 +7,3 @@
         | map('regex_replace', '^([^:]+):(\\d+):(.+)$', '{"host": "\\1", "port": \\2|int, "name": "\\3"}')
         | map('from_yaml') | list
       }}
-
-    - name: Add each pool member
-      bigip_pool_member:
-        server: "{{ f5_host }}"
-        user: "{{ f5_user }}"
-        password: "{{ f5_password }}"
-        validate_certs: "{{ validate_certs }}"
-        state: present
-        pool: "{{ pool_name }}"
-        host: "{{ item.host }}"
-        port: "{{ item.port }}"
-        name: "{{ item.name }}"
-      loop: "{{ pool_members }}"
-      delegate_to: localhost
