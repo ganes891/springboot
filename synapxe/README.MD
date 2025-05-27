@@ -41,70 +41,76 @@ ansible.utils:6.0.0 was installed successfully
 [root@sgctcrhclient02 ~]#
 
 
-- hosts: all
-  become: true
-  vars:
-    task_to_run: "{{ task | default('install') }}"
-    role_to_use: "{{ role | default('webserver') }}"
-  tasks:
-    - name: Run dynamic role task
-      include_tasks: "roles/{{ role_to_use }}/tasks/{{ task_to_run }}.yml"
 
 
-
-
-- name: Email F5 Device Info as HTML
+- name: Collect and Email F5 BIG-IP Device Info
   hosts: f5
   gather_facts: no
+  collections:
+    - f5networks.f5_modules
+    - community.general
   vars:
+    f5_user: admin
+    f5_password: "{{ vault_f5_password }}"
+    f5_server: "{{ inventory_hostname }}"
     gmail_user: your_email@gmail.com
-    gmail_app_password: your_app_password  # Use vault or env vars for security
+    gmail_app_password: "{{ vault_gmail_password }}"
 
   tasks:
-    - name: Run F5 command
-      ansible.builtin.command: "tmsh list sys"
-      register: f5_result
+    - name: Collect BIG-IP device info
+      bigip_device_info:
+        server: "{{ f5_server }}"
+        user: "{{ f5_user }}"
+        password: "{{ f5_password }}"
+        validate_certs: no
+      register: f5_device_facts
 
-    - name: Render HTML report to temp file
-      ansible.builtin.template:
-        src: f5_output_template.j2
-        dest: "/tmp/f5_report_{{ inventory_hostname }}.html"
+    - name: Write HTML file from BIG-IP info
+      template:
+        src: templates/f5_device_info_template.j2
+        dest: "/tmp/f5_device_info_{{ inventory_hostname }}.html"
       vars:
-        f5_output: "{{ f5_result.stdout_lines | join('\n') }}"
+        f5_info: "{{ f5_device_facts.ansible_facts }}"
 
-    - name: Send HTML report to Gmail
+    - name: Email BIG-IP info HTML report
       community.general.mail:
         host: smtp.gmail.com
         port: 587
         username: "{{ gmail_user }}"
         password: "{{ gmail_app_password }}"
-        to: your_email@gmail.com
-        subject: "F5 Device Report - {{ inventory_hostname }}"
+        to: "{{ gmail_user }}"
+        subject: "BIG-IP Device Info - {{ inventory_hostname }}"
         subtype: html
-        body: "{{ lookup('file', '/tmp/f5_report_' + inventory_hostname + '.html') }}"
+        body: "{{ lookup('file', '/tmp/f5_device_info_' + inventory_hostname + '.html') }}"
       delegate_to: localhost
 
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>F5 Device Info</title>
+    <title>F5 BIG-IP Device Info</title>
     <style>
         body { font-family: Arial, sans-serif; }
+        h2 { color: #2c3e50; }
         pre {
             background-color: #f4f4f4;
             padding: 10px;
             border-radius: 5px;
-            overflow: auto;
+            overflow-x: auto;
         }
     </style>
 </head>
 <body>
-    <h1>F5 Device Info</h1>
-    <pre>{{ f5_output | to_nice_json }}</pre>
+    <h1>BIG-IP Device Info - {{ inventory_hostname }}</h1>
+    {% for key, value in f5_info.items() %}
+        <h2>{{ key }}</h2>
+        <pre>{{ value | to_nice_json }}</pre>
+    {% endfor %}
 </body>
 </html>
 
-1. Template (templates/f5_output_template.j2)
+
+Jinja2 Template: templates/f5_device_info_template.j2
+
 
 
