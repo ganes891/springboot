@@ -17,3 +17,16 @@
 192.168.1.10:80:web01-node1
 192.168.1.11:80:web01-node2
 192.168.1.12:443:web01-node3
+
+
+- name: Parse members into list of dictionaries
+  set_fact:
+    pool_members: >-
+      {{
+        members.splitlines()
+        | reject('match', '^\\s*$')
+        | map('regex_replace', '^([^:]+):(\\d+):(.+)$', '{"host": "\1", "port": \2, "name": "\3"}')
+        | map('from_yaml')
+        | select('defined')
+        | list
+      }}
