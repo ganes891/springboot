@@ -4,6 +4,11 @@
       {{
         members.splitlines()
         | reject('match', '^\\s*$')  # Remove empty lines
-        | map('regex_replace', '^([^:]+):(\\d+):(.+)$', '{"host": "\\1", "port": \\2", "name": "\\3"}')
+        | map('regex_replace', '^([^:]+):(\\d+):(.+)$', '{"host": "\\1", "port": \\2, "name": "\\3"}')
         | map('from_yaml') | list
       }}
+
+
+    - name: Debug parsed members
+      debug:
+        var: pool_members
