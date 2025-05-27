@@ -1,5 +1,5 @@
 ---
-- name: Add pool members to F5 pool
+- name: Add pool members with name to F5 pool
   hosts: localhost
   gather_facts: no
   connection: local
@@ -14,26 +14,26 @@
     validate_certs: false
 
   vars_prompt:
-    # These would be set via the Tower/AWX survey instead
-    # Uncomment for CLI/manual use
+    # These are used if not coming from Tower survey
     # - name: pool_name
     #   prompt: "Enter F5 pool name (e.g. /Common/web01)"
     #   private: no
     #
     # - name: members
-    #   prompt: "Enter pool members (one per line, format: IP:PORT)"
+    #   prompt: "Enter pool members (IP:PORT:NAME per line)"
     #   private: no
     #   multiline: true
 
   tasks:
-    - name: Parse member list into structured data
+    - name: Parse member list with names
       set_fact:
         pool_members: >-
           {{
-            members.splitlines() | select('match', '^[^#]+$') |
-            map('regex_search', '(?P<ip>[^:]+):(?P<port>\\d+)', '\\g<ip>:\\g<port>') |
-            map('regex_replace', '^([^:]+):(\\d+)$', '{"host": "\\1", "port": \\2|int}') |
-            map('from_yaml') | list
+            members.splitlines()
+            | select('match', '^[^#]+$')
+            | map('regex_search', '(?P<ip>[^:]+):(?P<port>\\d+):(?P<name>.+)', '\\g<ip>:\\g<port>:\\g<name>')
+            | map('regex_replace', '^([^:]+):(\\d+):(.+)$', '{"host": "\\1", "port": \\2|int, "name": "\\3"}')
+            | map('from_yaml') | list
           }}
 
     - name: Add each pool member
@@ -46,5 +46,6 @@
         pool: "{{ pool_name }}"
         host: "{{ item.host }}"
         port: "{{ item.port }}"
+        name: "{{ item.name }}"
       loop: "{{ pool_members }}"
       delegate_to: localhost
