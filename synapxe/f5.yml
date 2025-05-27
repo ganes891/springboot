@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F5 BIG-IP Device Info</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        th, td {
+            border: 1px solid #cccccc;
+            text-align: left;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        h1, h2 { color: #333; }
+        pre {
+            background-color: #f8f8f8;
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>BIG-IP Device Info - {{ inventory_hostname }}</h1>
+
+<h2>Pools</h2>
+<table>
+    <tr>
+        <th>Pool Name</th>
+        <th>Load Balancing Method</th>
+        <th>Monitor</th>
+    </tr>
+    {% for pool in f5_info.pools %}
+    <tr>
+        <td>{{ pool.name }}</td>
+        <td>{{ pool.loadBalancingMode }}</td>
+        <td>{{ pool.monitor }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h2>Pool Members</h2>
+<table>
+    <tr>
+        <th>Pool Name</th>
+        <th>Member Name</th>
+        <th>Address</th>
+        <th>State</th>
+    </tr>
+    {% for pool, members in f5_info.pool_members.items() %}
+        {% for member in members %}
+        <tr>
+            <td>{{ pool }}</td>
+            <td>{{ member.name }}</td>
+            <td>{{ member.address }}</td>
+            <td>{{ member.state }}</td>
+        </tr>
+        {% endfor %}
+    {% endfor %}
+</table>
+
+</body>
+</html>
