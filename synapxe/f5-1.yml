@@ -83,3 +83,20 @@
       loop: "{{ pool_members }}"
       delegate_to: localhost
 
+
+
+- name: Set pool member session state (enable/disable)
+  bigip_pool_member:
+    server: "{{ f5_host }}"
+    user: "{{ f5_user }}"
+    password: "{{ f5_password }}"
+    validate_certs: "{{ validate_certs }}"
+    state: present
+    pool: "{{ pool_name }}"
+    host: "{{ item.host }}"
+    port: "{{ item.port }}"
+    name: "{{ item.name }}"
+    session: "{{ session_state }}"
+  loop: "{{ pool_members }}"
+  delegate_to: localhost
+
