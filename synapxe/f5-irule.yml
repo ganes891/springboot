@@ -1,5 +1,5 @@
 ---
-- name: Manage F5 Maintenance Mode with iRule
+- name: Manage F5 Maintenance Mode without file storage
   hosts: localhost
   gather_facts: no
 
@@ -11,30 +11,31 @@
     partition: "Common"
     vs_name: "vs_web01"
     maintenance_irule_name: "maintenance_irule"
-    maintenance_message: "<html><body><h1>Site Under Maintenance</h1><p>Please check back later.</p></body></html>"
-    maintenance_mode: "start"  # Change to "end" to restore prod iRules
+    maintenance_message: "<html><body><h1>Site Under Maintenance</h1><p>Please check back soon.</p></body></html>"
+    maintenance_mode: "start"   # change to "end"
+    prod_irules: []             # populate this only when restoring
 
   tasks:
 
-    - name: Update/Create maintenance iRule
+    - name: Create or update maintenance iRule
       bigip_irule:
         server: "{{ f5_host }}"
         user: "{{ f5_user }}"
         password: "{{ f5_password }}"
         validate_certs: "{{ validate_certs }}"
-        name: "{{ maintenance_irule_name }}"
         partition: "{{ partition }}"
-        state: present
+        name: "{{ maintenance_irule_name }}"
         content: |
           when HTTP_REQUEST {
               HTTP::respond 503 content {
                   {{ maintenance_message }}
               }
           }
+        state: present
       when: maintenance_mode == "start"
       delegate_to: localhost
 
-    - name: Get current virtual server configuration
+    - name: Get current iRules attached to VIP
       uri:
         url: "https://{{ f5_host }}/mgmt/tm/ltm/virtual/~{{ partition }}~{{ vs_name }}"
         method: GET
@@ -43,17 +44,12 @@
         validate_certs: "{{ validate_certs }}"
         return_content: yes
       register: vs_config
+      when: maintenance_mode == "start"
       delegate_to: localhost
 
-    - name: Save current iRules attached to VIP
-      set_fact:
-        original_irules: "{{ vs_config.json.rules | default([]) }}"
-      when: maintenance_mode == "start"
-
-    - name: Save original iRules to local file
-      copy:
-        content: "{{ original_irules | to_nice_json }}"
-        dest: "backup_irules_{{ vs_name }}.json"
+    - name: Show current attached iRules for optional copy-paste
+      debug:
+        msg: "Current iRules on {{ vs_name }}: {{ vs_config.json.rules | default([]) }}"
       when: maintenance_mode == "start"
 
     - name: Apply maintenance iRule to VIP
@@ -70,13 +66,7 @@
       when: maintenance_mode == "start"
       delegate_to: localhost
 
-    - name: Load original iRules from backup file
-      slurp:
-        src: "backup_irules_{{ vs_name }}.json"
-      register: slurped_irules
-      when: maintenance_mode == "end"
-
-    - name: Restore production iRules to VIP
+    - name: Restore original iRules to VIP
       bigip_virtual_server:
         server: "{{ f5_host }}"
         user: "{{ f5_user }}"
@@ -84,7 +74,7 @@
         validate_certs: "{{ validate_certs }}"
         name: "{{ vs_name }}"
         partition: "{{ partition }}"
-        rules: "{{ (slurped_irules.content | b64decode) | from_json }}"
+        rules: "{{ prod_irules }}"
         state: present
-      when: maintenance_mode == "end"
+      when: maintenance_mode == "end" and prod_irules | length > 0
       delegate_to: localhost
