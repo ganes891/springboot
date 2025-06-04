@@ -1,0 +1,47 @@
+---
+- name: Create LTM Pool only if it does not exist
+  hosts: localhost
+  gather_facts: no
+  collections:
+    - f5networks.f5_modules
+
+  vars:
+    f5_host: "your-f5-host"
+    f5_user: "admin"
+    f5_pass: "your-password"
+    ltm_pool_name: "example_ltm_pool"
+    ltm_partition: "Common"
+    validate_certs: false
+
+  tasks:
+
+    - name: Check if LTM pool exists
+      uri:
+        url: "https://{{ f5_host }}/mgmt/tm/ltm/pool/~{{ ltm_partition }}~{{ ltm_pool_name }}"
+        method: GET
+        user: "{{ f5_user }}"
+        password: "{{ f5_pass }}"
+        validate_certs: "{{ validate_certs }}"
+        status_code: [200, 404]
+      register: pool_check
+
+    - name: Show message if LTM pool already exists
+      debug:
+        msg: "LTM Pool '{{ ltm_pool_name }}' already exists. Skipping creation."
+      when: pool_check.status == 200
+
+    - name: Create LTM pool only if it doesn't exist
+      bigip_pool:
+        name: "{{ ltm_pool_name }}"
+        partition: "{{ ltm_partition }}"
+        lb_method: "round-robin"
+        monitor_type: "and_list"
+        monitors:
+          - http
+        state: "present"
+        provider:
+          server: "{{ f5_host }}"
+          user: "{{ f5_user }}"
+          password: "{{ f5_pass }}"
+          validate_certs: "{{ validate_certs }}"
+      when: pool_check.status == 404
