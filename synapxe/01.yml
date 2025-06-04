@@ -45,3 +45,57 @@
           password: "{{ f5_pass }}"
           validate_certs: "{{ validate_certs }}"
       when: pool_check.status == 404
+
+---
+- name: Check and Create LTM Pool only if it does not exist
+  hosts: localhost
+  gather_facts: no
+  collections:
+    - f5networks.f5_modules
+
+  vars:
+    f5_host: "your-f5-host"
+    f5_user: "admin"
+    f5_pass: "your-password"
+    ltm_pool_name: "example_ltm_pool"
+    ltm_partition: "Common"
+    validate_certs: false
+
+  tasks:
+
+    - name: Collect existing LTM pools
+      bigip_device_info:
+        gather_subset:
+          - ltm-pools
+        provider:
+          server: "{{ f5_host }}"
+          user: "{{ f5_user }}"
+          password: "{{ f5_pass }}"
+          validate_certs: "{{ validate_certs }}"
+      register: pool_facts
+
+    - name: Check if pool already exists
+      set_fact:
+        pool_exists: >-
+          {{ (pool_facts.ansible_facts.ltm_pools | selectattr('fullPath', 'equalto', ltm_partition ~ '/' ~ ltm_pool_name) | list) | length > 0 }}
+
+    - name: Show message if pool exists
+      debug:
+        msg: "LTM Pool '{{ ltm_pool_name }}' already exists. Skipping creation."
+      when: pool_exists
+
+    - name: Create LTM pool only if it doesn't exist
+      bigip_pool:
+        name: "{{ ltm_pool_name }}"
+        partition: "{{ ltm_partition }}"
+        lb_method: "round-robin"
+        monitors:
+          - http
+        state: present
+        provider:
+          server: "{{ f5_host }}"
+          user: "{{ f5_user }}"
+          password: "{{ f5_pass }}"
+          validate_certs: "{{ validate_certs }}"
+      when: not pool_exists
+
