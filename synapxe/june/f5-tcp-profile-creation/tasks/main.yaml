@@ -1,0 +1,8 @@
+- name: Create a new TCP profile
+  f5networks.f5_modules.bigip_profile_tcp:
+    provider: "{{ provider }}"
+    name: "{{ profile_name }}"
+    state: present
+    parent: "{{ parent_profile }}"
+    idle_timeout: "{{ time_out }}"
+  delegate_to: localhost  

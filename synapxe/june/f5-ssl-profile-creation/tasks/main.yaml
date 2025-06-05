@@ -1,0 +1,29 @@
+- name: Create a client SSL profile with a cert/key/chain setting
+  bigip_profile_client_ssl:
+    provider: "{{ provider }}"
+    name: "{{ profile_name }}"
+    parent: "{{ parent_profile }}"
+    state: present
+    ciphers: "{{ cipher_value }}"
+    options: "{{ option_list }}"
+    cert_key_chain:
+      - cert: "{{ cert_name }}"
+        key: "{{ key_name }}"
+        chain: "{{ chain_name }}"
+  delegate_to: localhost
+  when: profile_type == "client"
+
+- name: Create a Server SSL profile with a cert/key/chain setting
+  bigip_profile_server_ssl:
+    provider: "{{ provider }}"
+    name: "{{ profile_name }}"
+    parent: "{{ parent_profile }}"
+    state: present
+    ciphers: "{{ cipher_value }}"
+    options: "{{ option_list }}"
+    cert_key_chain:
+      - cert: "{{ cert_name }}"
+        key: "{{ key_name }}"
+        chain: "{{ chain_name }}"
+  delegate_to: localhost
+  when: profile_type == "server"  

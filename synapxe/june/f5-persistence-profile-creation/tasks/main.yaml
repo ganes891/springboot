@@ -1,0 +1,48 @@
+  # - block:
+- name: Create a persistence profile
+  bigip_profile_persistence_cookie:
+    name: "{{ persistence_profile_name }}"
+    state: present
+    cookie_method: "{{ cookie_method }}"
+    cookie_name: "{{ cookie_name }}"
+    # match_across_pools: true
+    # match_across_services: true
+    # match_across_virtuals: true
+    # override_connection_limit: true 
+    cookie_encryption: "{{ cookie_encryption | default(omit) }}"
+    encryption_passphrase: "{{ encryption_passphrase | default(omit) }}"
+    expiration: "{{ expiration_timeout | default(omit) }}"
+    provider: "{{ provider }}"
+  delegate_to: localhost
+  when: persistence_type == "cookie"
+
+
+- name: Create a persistence profile
+  f5networks.f5_modules.bigip_profile_persistence_universal:
+    name: "{{ persistence_profile_name }}"
+    state: present
+    provider: "{{ provider }}"
+    # match_across_pools: true
+    # match_across_services: true
+    # match_across_virtuals: true
+    # override_connection_limit: true 
+    mirror: true
+    rule: "{{ irule_name }}"
+    timeout: "{{ timeout_seconds | default(omit) }}"
+  delegate_to: localhost
+  when: persistence_type == "universal"
+
+
+- name: Create a persistence profile
+  bigip_profile_persistence_src_addr:
+    name: "{{ persistence_profile_name }}"
+    state: present
+    provider: "{{ provider }}"
+    # match_across_pools: true
+    # match_across_services: true
+    # match_across_virtuals: true
+    # override_connection_limit: true
+    timeout: "{{ timeout_seconds | default(omit) }}"    
+    validate_certs: no     
+  delegate_to: localhost  
+  when: persistence_type == "sourceaddr"

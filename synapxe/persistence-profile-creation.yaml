@@ -1,0 +1,9 @@
+- name: F5 Automation 
+  hosts: all
+  gather_facts: no
+  vars_files:
+    - vars/persistence_profile_vars.yaml
+  tasks:
+    - name: Create Persistence Profile
+      ansible.builtin.include_role:
+        name: f5-persistence-profile-creation

@@ -1,0 +1,5 @@
+provider:
+  server: "{{ f5_hostname }}"
+  user: "{{ f5_username }}"
+  password: "{{ f5_password }}"
+  validate_certs: no

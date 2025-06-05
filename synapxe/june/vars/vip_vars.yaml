@@ -1,0 +1,50 @@
+provider:
+  server: "{{ f5_hostname }}"
+  user: "{{ f5_username }}"
+  password: "{{ f5_password }}"
+  validate_certs: no
+jira_ref: "{{ jira_ref }}"
+profiles:
+  - name: "{{ http_profile }}"
+  - name: "{{ tcp_profile }}"
+    # context: "serverside"
+  # - name: "{{ tcp_profile }}"
+  #   context: "clientside"
+  # - name: "{{ server_profile }}"
+  #   context: "serverside"
+  - name: "{{ client_ssl_profile }}"
+    context: "clientside"
+  - name: "{{ server_ssl_profile }}"
+    context: "serverside"
+# tcp_profile: "{{ tcp_profile }}"
+# http_profile: "{{ http_profile }}"
+# tcp_profile_client: "{{ tcp_profile_client }}"
+# tcp_profile_server: "{{ tcp_profile_server }}"
+# client_ssl_profile: "{{ client_ssl_profile }}"
+# server_ssl_profile: "{{ server_ssl_profile }}"
+default_persistence_profile: "{{ default_persistence_profile }}"
+# fallback_persistence_profile: "{{ fallback_persistence_profile }}"
+# protocol: "{{ protocol }}"
+
+
+
+
+
+
+
+
+
+# {% if persistence_profile | default('') | length > 0 %}    
+# persistence_profile: 
+#   - name: "{{ persistence_profile }}"
+# {% endif %}
+
+# {% if persistence_profile is defined persistence_profile != '' %}    
+# persistence_profile: 
+#   - name: "{{ persistence_profile }}"
+# {% endif %}
+
+# http_profile: "/Common/http"
+# tcp_profile: "/Common/tcp"
+# client_ssl_profile: "/Common/clientssl"
+# server_ssl_profile: "/Common/serverssl"

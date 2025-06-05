@@ -1,0 +1,9 @@
+ansible_python_interpreter: /usr/bin/python
+
+email_smtp_server: smtp.gmail.com
+
+email_smtp_server_port: 587
+
+email_smtp_username: ganesan.kandasamygr@gmail.com
+
+email_smtp_password: "onml znki vpln soyi"

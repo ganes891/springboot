@@ -1,0 +1,10 @@
+- name: F5 Automation 
+  hosts: all
+  gather_facts: no
+  vars_files:
+    - vars/tcp_profile_vars.yaml
+
+  tasks:
+    - name: Create new TCP Profile
+      ansible.builtin.include_role:
+        name: f5-tcp-profile-creation
