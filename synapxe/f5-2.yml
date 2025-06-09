@@ -1,0 +1,71 @@
+---
+- name: Enable or Disable a node under a VIP in F5 LTM
+  hosts: localhost
+  gather_facts: no
+  collections:
+    - f5networks.f5_modules
+
+  vars:
+    f5_host: "192.168.1.245"
+    f5_user: "admin"
+    f5_password: "your_password"
+    vip_name: "/Common/my-vip"
+    node_name: "10.0.0.11:80"   # Must match full member format (IP:port)
+    action: "disable"           # Use "enable" or "disable"
+
+  tasks:
+
+    - name: Get virtual server details
+      bigip_virtual_server_facts:
+        server: "{{ f5_host }}"
+        user: "{{ f5_user }}"
+        password: "{{ f5_password }}"
+        validate_certs: no
+        name: "{{ vip_name }}"
+      register: vip_facts
+
+    - name: Fail if virtual server not found
+      fail:
+        msg: "VIP {{ vip_name }} not found"
+      when: vip_facts.virtual_servers | length == 0
+
+    - name: Get pool name from VIP
+      set_fact:
+        pool_name: "{{ vip_facts.virtual_servers[0].pool }}"
+
+    - name: Get pool members
+      bigip_pool_member_facts:
+        server: "{{ f5_host }}"
+        user: "{{ f5_user }}"
+        password: "{{ f5_password }}"
+        validate_certs: no
+        pool: "{{ pool_name }}"
+      register: pool_members
+
+    - name: Find matching member
+      set_fact:
+        matched_member: "{{ item }}"
+      loop: "{{ pool_members.members }}"
+      when: item.name == node_name
+      vars:
+        ansible_loop_var: item
+
+    - name: Fail if member not found
+      fail:
+        msg: "Node {{ node_name }} not found in pool {{ pool_name }}"
+      when: matched_member is not defined
+
+    - name: Enable or Disable the member
+      bigip_pool_member:
+        server: "{{ f5_host }}"
+        user: "{{ f5_user }}"
+        password: "{{ f5_password }}"
+        validate_certs: no
+        state: "present"
+        pool: "{{ pool_name }}"
+        name: "{{ matched_member.name }}"
+        partition: "{{ matched_member.partition }}"
+        address: "{{ matched_member.address }}"
+        port: "{{ matched_member.port }}"
+        session: "{{ 'user-disabled' if action == 'disable' else 'user-enabled' }}"
+      delegate_to: localhost
