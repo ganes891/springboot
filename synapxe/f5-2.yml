@@ -69,3 +69,25 @@
         port: "{{ matched_member.port }}"
         session: "{{ 'user-disabled' if action == 'disable' else 'user-enabled' }}"
       delegate_to: localhost
+
+- name: Find the matching member
+      set_fact:
+        matched: "{{ item }}"
+      with_items: "{{ pool_result.entries }}"
+      when: (item.key | regex_replace('.*/', '')) == node_name
+
+    - name: Fail if member not found
+      fail:
+        msg: "Node {{ node_name }} not found in pool {{ pool_name }}"
+      when: matched is not defined
+
+    - name: Enable or disable member
+      f5networks.f5_modules.bigip_pool_member:
+        server: "{{ f5_host }}"
+        user: "{{ f5_user }}"
+        password: "{{ f5_password }}"
+        validate_certs: no
+        pool: "{{ pool_name }}"
+        name: "{{ node_name }}"
+        session: "{{ 'user-disabled' if action == 'disable' else 'user-enabled' }}"
+        state: presen
