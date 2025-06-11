@@ -1,0 +1,94 @@
+---
+- name: Enable or Disable a pool member under a specific VIP on F5 and send alerts on failure
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  collections:
+    - f5networks.f5_modules
+    - community.general
+
+  vars:
+    f5_host: "192.168.1.245"
+    f5_user: "admin"
+    f5_password: "your_password"
+    validate_certs: false
+
+    vip_name: "/Common/webapp_09"
+    pool_member: "10.10.1.12:80"
+    action: "disable"
+
+    email_to: "alerts@example.com"
+    email_from: "ansible-alerts@example.com"
+    smtp_host: "smtp.example.com"
+    smtp_port: 25
+
+  tasks:
+
+    - name: Gather virtual server info
+      f5networks.f5_modules.bigip_device_info:
+        server: "{{ f5_host }}"
+        user: "{{ f5_user }}"
+        password: "{{ f5_password }}"
+        validate_certs: "{{ validate_certs }}"
+        gather_subset:
+          - virtual-servers
+      register: device_info
+
+    - name: Extract pool name from VIP
+      set_fact:
+        pool_name: >-
+          {{
+            (device_info.virtual_servers
+              | selectattr('fullPath', 'equalto', vip_name)
+              | map(attribute='pool')
+              | list
+            )[0] | default('', true)
+          }}
+
+    - name: Send email if VIP or pool not found
+      community.general.mail:
+        host: "{{ smtp_host }}"
+        port: "{{ smtp_port }}"
+        to: "{{ email_to }}"
+        subject: "[F5 ALERT] Pool not found for VIP {{ vip_name }}"
+        body: "Pool could not be found for VIP '{{ vip_name }}' on F5 device {{ f5_host }}."
+        from: "{{ email_from }}"
+      when: pool_name == ""
+      failed_when: true
+
+    - name: Get pool members
+      f5networks.f5_modules.bigip_pool_member:
+        server: "{{ f5_host }}"
+        user: "{{ f5_user }}"
+        password: "{{ f5_password }}"
+        validate_certs: "{{ validate_certs }}"
+        pool: "{{ pool_name }}"
+        state: present
+      register: pool_members
+
+    - name: Check if member is in pool
+      set_fact:
+        member_found: "{{ pool_member in (pool_members.members | map(attribute='name') | list) }}"
+
+    - name: Send email if pool member not found
+      community.general.mail:
+        host: "{{ smtp_host }}"
+        port: "{{ smtp_port }}"
+        to: "{{ email_to }}"
+        subject: "[F5 ALERT] Pool Member Not Found"
+        body: "Member '{{ pool_member }}' was not found in pool '{{ pool_name }}' under VIP '{{ vip_name }}'."
+        from: "{{ email_from }}"
+      when: not member_found
+      failed_when: true
+
+    - name: Enable or disable the pool member
+      f5networks.f5_modules.bigip_pool_member:
+        server: "{{ f5_host }}"
+        user: "{{ f5_user }}"
+        password: "{{ f5_password }}"
+        validate_certs: "{{ validate_certs }}"
+        pool: "{{ pool_name }}"
+        name: "{{ pool_member }}"
+        session: "{{ 'user-disabled' if action == 'disable' else 'user-enabled' }}"
+        state: present
+      when: member_found
